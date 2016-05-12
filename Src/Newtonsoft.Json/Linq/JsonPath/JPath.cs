@@ -328,7 +328,7 @@ namespace Newtonsoft.Json.Linq.JsonPath
 
                     return new ArrayIndexFilter();
                 }
-                else if (currentCharacter == ':')
+                else if (StringUtils.IsAssignment(currentCharacter))
                 {
                     int length = (end ?? _currentIndex) - start;
 

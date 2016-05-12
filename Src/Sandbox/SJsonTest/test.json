@@ -1,0 +1,15 @@
+﻿
+// Implied object brackets are allowed
+
+_myProp = "a value"
+
+
+obj = { 
+
+    prop=10/* separated by a comment! */prop2 = "a string"
+    anotherProp = 32,
+
+    _foo = /* comment on the way of value*/ true// Another comment
+    
+    anArray = [ 1 2 3 4 5 6 7 8 9 ]
+}

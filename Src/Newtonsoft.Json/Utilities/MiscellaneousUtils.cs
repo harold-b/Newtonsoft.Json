@@ -130,7 +130,11 @@ namespace Newtonsoft.Json.Utilities
 
         public static void GetQualifiedNameParts(string qualifiedName, out string prefix, out string localName)
         {
-            int colonPosition = qualifiedName.IndexOf(':');
+            int colonPosition = qualifiedName.IndexOf(StringUtils.AssignEq);
+            if( colonPosition == -1 )
+            {
+                qualifiedName.IndexOf(StringUtils.AssignColon);
+            }
 
             if ((colonPosition == -1 || colonPosition == 0) || (qualifiedName.Length - 1) == colonPosition)
             {

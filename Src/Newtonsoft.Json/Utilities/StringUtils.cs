@@ -45,6 +45,10 @@ namespace Newtonsoft.Json.Utilities
         public const char LineFeed = '\n';
         public const char Tab = '\t';
 
+        public const char AssignColon = ':';
+        public const char AssignEq = '=';
+        public const char Assign = AssignEq;
+
         public static string FormatWith(this string format, IFormatProvider provider, object arg0)
         {
             return format.FormatWith(provider, new[] { arg0 });
@@ -226,6 +230,11 @@ namespace Newtonsoft.Json.Utilities
         public static bool EndsWith(this string source, char value)
         {
             return (source.Length > 0 && source[source.Length - 1] == value);
+        }
+
+        public static bool IsAssignment( char c )
+        {
+            return c == AssignEq || c == AssignColon;
         }
     }
 }

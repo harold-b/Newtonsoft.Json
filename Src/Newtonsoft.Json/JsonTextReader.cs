@@ -72,6 +72,8 @@ namespace Newtonsoft.Json
         private IArrayPool<char> _arrayPool;
         internal PropertyNameTable NameTable;
 
+        private int _rootObjectImplied = 0;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonReader"/> class with the specified <see cref="TextReader"/>.
         /// </summary>
@@ -366,7 +368,42 @@ namespace Newtonsoft.Json
         /// </returns>
         public override bool Read()
         {
+            bool r = ReadInternal();
+
+            if( !r )
+            {
+                if( _rootObjectImplied == 1 )
+                {
+                    _rootObjectImplied ++;
+                    SetToken( JsonToken.EndObject );
+                    return true;
+                }
+                else
+                {
+                    SetToken(JsonToken.None);
+                    return false;
+                }
+            }
+            else if( _currentState == State.Finished && _rootObjectImplied == 1 )
+            {
+                throw JsonReaderException.Create(this, 
+                    string.Format( CultureInfo.InvariantCulture,
+                    "Unexpected root object terminator encountered. Root object start was implied." ) );
+            }
+
+            return true;
+        }
+       
+        private bool ReadInternal()
+        {
             EnsureBuffer();
+
+
+            if( _currentState == State.Start )
+            {
+                if( ConsumeUntilFirstToken() )
+                    return true;
+            }
 
             while (true)
             {
@@ -411,6 +448,56 @@ namespace Newtonsoft.Json
                         return false;
                     default:
                         throw JsonReaderException.Create(this, "Unexpected state: {0}.".FormatWith(CultureInfo.InvariantCulture, CurrentState));
+                }
+            }
+        }
+
+        private bool ConsumeUntilFirstToken()
+        {
+            // Eat all white space & comments until we reach an actual token,
+            // at that point, if it's not an Object start token '{', then we imply one
+            while( true )
+            {
+                char c = _chars[_charPos];
+
+                switch( c )
+                {
+                    case '\0':
+                        if (_charsUsed == _charPos)
+                        {
+                            if (ReadData(false) == 0)
+                            {
+                                _currentState = State.Finished;
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            _charPos++;
+                        }
+                    break;
+
+                    case StringUtils.CarriageReturn:
+                        ProcessCarriageReturn(false);
+                    break;
+
+                    case StringUtils.LineFeed:
+                        ProcessLineFeed();
+                    break;
+
+                    case ' ':
+                    case StringUtils.Tab:
+                        // consume
+                        _charPos ++;
+                    break;
+
+                    case '{':
+                        return false;
+                                   
+                    default:
+                        _rootObjectImplied = 1;
+                        SetToken( JsonToken.StartObject );
+                        return true;
                 }
             }
         }
@@ -1350,7 +1437,15 @@ namespace Newtonsoft.Json
                         }
                         else
                         {
-                            throw JsonReaderException.Create(this, "After parsing a value an unexpected character was encountered: {0}.".FormatWith(CultureInfo.InvariantCulture, currentChar));
+                            //throw JsonReaderException.Create(this, "After parsing a value an unexpected character was encountered: {0}.".FormatWith(CultureInfo.InvariantCulture, currentChar));
+
+                            // At this point we hit something that might be a key or value token.
+                            // We change into the appropriate container mode because we allow
+                            // white space, new lines and comments as separators. Therefore,
+                            // this would attempt to continue as if we have already parsed a separator ( comma ),
+                            // even don't we haven't.
+                            SetStateBasedOnCurrent();
+                            return false;
                         }
                         break;
                 }
@@ -1383,8 +1478,8 @@ namespace Newtonsoft.Json
                         _charPos++;
                         return true;
                     case '/':
-                        ParseComment(true);
-                        return true;
+                        ParseComment(false);
+                        break; //return true;
                     case StringUtils.CarriageReturn:
                         ProcessCarriageReturn(false);
                         break;
@@ -1453,9 +1548,10 @@ namespace Newtonsoft.Json
 
             EatWhitespace(false);
 
-            if (_chars[_charPos] != ':')
+            if (!StringUtils.IsAssignment(_chars[_charPos]))
             {
-                throw JsonReaderException.Create(this, "Invalid character after parsing property name. Expected ':' but got: {0}.".FormatWith(CultureInfo.InvariantCulture, _chars[_charPos]));
+                throw JsonReaderException.Create(this,
+                    "Invalid character after parsing property name. Expected ':' or '=' but got: {0}.".FormatWith(CultureInfo.InvariantCulture, _chars[_charPos]));
             }
 
             _charPos++;
@@ -1502,7 +1598,7 @@ namespace Newtonsoft.Json
                             _charPos++;
                             break;
                         }
-                        else if (char.IsWhiteSpace(currentChar) || currentChar == ':')
+                        else if (char.IsWhiteSpace(currentChar) || StringUtils.IsAssignment(currentChar))
                         {
                             _stringReference = new StringReference(_chars, initialPosition, _charPos - initialPosition);
                             return;

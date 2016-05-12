@@ -258,7 +258,7 @@ namespace Newtonsoft.Json
 
             WriteEscapedString(name, _quoteName);
 
-            _writer.Write(':');
+            _writer.Write(StringUtils.Assign);
         }
 
         /// <summary>
@@ -289,7 +289,7 @@ namespace Newtonsoft.Json
                 }
             }
 
-            _writer.Write(':');
+            _writer.Write(StringUtils.Assign);
         }
 
         internal override void OnStringEscapeHandlingChanged()
