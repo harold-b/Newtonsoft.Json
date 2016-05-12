@@ -1,5 +1,7 @@
 #![Logo](Doc/icons/logo.jpg) Json.NET#
 
+## Fork for local changes to suit my requirements.
+
 - [Homepage](http://www.newtonsoft.com/json)
 - [Documentation](http://www.newtonsoft.com/json/help)
 - [NuGet Package](https://www.nuget.org/packages/Newtonsoft.Json)
