@@ -253,23 +253,7 @@
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
+  <Target Name="AfterBuild">
+  </Target>
   -->
-    <!-- Copy to our shared libraries dir -->
-    <PropertyGroup>
-        <LibsDir>$(ProjectDir)..\..\..\..\Libs\$(Configuration)_NET</LibsDir>
-    </PropertyGroup>
-
-    <Target Name="AfterBuild">
-        <MakeDir Directories="$(LibsDir)" />
-
-        <Copy SourceFiles="$(TargetDir)$(TargetName).dll"
-              DestinationFiles="$(LibsDir)\$(TargetName).dll" />
-
-        <Copy SourceFiles="$(TargetDir)$(TargetName).pdb"
-              DestinationFiles="$(LibsDir)\$(TargetName).pdb" />
-
-        <Copy SourceFiles="$(TargetDir)$(TargetName).xml"
-              DestinationFiles="$(LibsDir)\$(TargetName).xml" />
-    </Target>
-
 </Project>
